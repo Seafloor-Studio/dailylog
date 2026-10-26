@@ -139,7 +139,9 @@ There is also an option to import from the legacy CSV format ("Restore an old CS
 ## Add several shortcuts
 Touch and hold +, or choose "Add several shortcuts" from the three-dot menu, to add a batch at once. Each row has a name and the text to insert; "Add a row" gives you another, and ✕ removes one. Empty rows are skipped.
 
-Each shortcut puts the cursor after its text, and inserts the date wherever its text has `{DATETIME: yyyy-MM-dd}`. To place the cursor elsewhere, edit the shortcut afterwards.
+Each row also has a cursor position: how many characters of the text come before the cursor once the shortcut is inserted. It follows the end of the text as you type, until you type a number of your own; then it stays put. Clear it to go back to the end. A number past the end of the text is marked, and Add waits until it's fixed.
+
+A shortcut inserts the date wherever its text has `{DATETIME: yyyy-MM-dd}`. The cursor position counts that token as typed, as the slider in the single Add dialog does.
 
 # Privacy
 DailyLog has no accounts, ads, analytics or crash reporting, declares no Android permissions, and contains no networking code. The full [privacy policy](docs/PRIVACY.md) says what it keeps and where.

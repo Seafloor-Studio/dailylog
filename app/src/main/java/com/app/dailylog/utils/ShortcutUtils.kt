@@ -43,9 +43,14 @@ object ShortcutUtils {
         when (shortcut.type) {
             ShortcutType.TEXT -> return defaultIndex
             ShortcutType.DATETIME -> {
+                // A cursor inside a {DATETIME: …} token has no place in the date it becomes, and
+                // counting the token's raw characters could put it past the inserted text.
+                val index = FileNameTemplate.DATETIME_TOKEN.findAll(shortcut.value)
+                    .firstOrNull { defaultIndex > it.range.first && defaultIndex <= it.range.last }
+                    ?.let { it.range.last + 1 } ?: defaultIndex
                 // Take the section the cursor is supposed to come after and calculate the length
                 // of that once the DateTime patterns have been applies.
-                return replaceDateTimePatterns(shortcut.value.slice(0 until defaultIndex)).length
+                return replaceDateTimePatterns(shortcut.value.slice(0 until index)).length
             }
         }
         return defaultIndex
