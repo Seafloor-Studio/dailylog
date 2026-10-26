@@ -216,24 +216,26 @@ class RepositoryTest {
     }
 
     @Test
-    fun addShortcuts_fromRows_putsCursorAtEndAndSpotsDates() = runBlocking {
+    fun addShortcuts_fromRows_keepsTheirCursorAndSpotsDates() = runBlocking {
         repository.addShortcut("a", "one", 0, ShortcutType.TEXT)
         shortcuts()
         repository.addShortcuts(
             listOf(
-                "mood" to "\"mood, energy\": ",
-                "date" to "## {DATETIME: yyyy-MM-dd}\n",
-                "a" to "taken name",
-                "mood" to "same name twice",
+                ShortcutRow("mood", "\"mood, energy\": ", 1),
+                ShortcutRow("date", "## {DATETIME: yyyy-MM-dd}\n", 3),
+                ShortcutRow("a", "taken name", 0),
+                ShortcutRow("mood", "same name twice", 0),
             )
         )
         val added = shortcuts()
         assertEquals(listOf("a" to 0, "mood" to 1, "date" to 2), added.map { it.label to it.position })
         val mood = added.single { it.label == "mood" }
         assertEquals("\"mood, energy\": ", mood.value)
-        assertEquals(mood.value.length, mood.cursorIndex)
+        assertEquals(1, mood.cursorIndex)
         assertEquals(ShortcutType.TEXT, mood.type)
-        assertEquals(ShortcutType.DATETIME, added.single { it.label == "date" }.type)
+        val date = added.single { it.label == "date" }
+        assertEquals(3, date.cursorIndex)
+        assertEquals(ShortcutType.DATETIME, date.type)
     }
 
     @Test

@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.*
 import com.app.dailylog.repository.RepositoryInterface
 import com.app.dailylog.repository.Shortcut
+import com.app.dailylog.repository.ShortcutRow
 import com.app.dailylog.utils.DetermineBuildInterface
 import com.app.dailylog.utils.FileNameTemplate
 import kotlinx.coroutines.CoroutineDispatcher
@@ -44,7 +45,7 @@ class SettingsViewModel(
         repository.updateShortcut(id, label, text, cursor, position, type)
     }
 
-    fun addShortcuts(rows: List<Pair<String, String>>) = viewModelScope.launch(dispatcher) {
+    fun addShortcuts(rows: List<ShortcutRow>) = viewModelScope.launch(dispatcher) {
         repository.addShortcuts(rows)
     }
 

@@ -42,7 +42,9 @@
     <string name="no_shortcuts_info">Tap + to add your first shortcut.</string>
     <string name="bulk_add_subtitle">One row for each shortcut</string>
     <string name="bulk_add_row">Add a row</string>
-    <string name="bulk_add_help">The cursor ends up after the text. Write {DATETIME: yyyy-MM-dd} to insert the date; any standard date or time format works.</string>
+    <string name="bulk_add_help">Cursor position is how many characters of the text come before the cursor. It stays at the end of the text until you change it. Write {DATETIME: yyyy-MM-dd} to insert the date; any standard date or time format works.</string>
+    <string name="bulk_add_cursor">Cursor position</string>
+    <string name="cursorPastEndError">Can be at most %1$d, the length of the text.</string>
     <string name="bulk_add_none">Add</string>
     <string name="bulk_add_count">Add %1$d</string>
     <string name="bulk_add_remove_row">Remove row %1$d</string>

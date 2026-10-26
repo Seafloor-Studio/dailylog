@@ -8,6 +8,7 @@ import androidx.core.widget.doAfterTextChanged
 import com.app.dailylog.R
 import com.app.dailylog.databinding.BulkAddRowBinding
 import com.app.dailylog.databinding.BulkAddShortcutsBinding
+import com.app.dailylog.repository.ShortcutRow
 import com.google.android.material.textfield.TextInputLayout
 
 class BulkAddShortcutsDialogFragment(viewModel: ShortcutDialogViewModel) : ShortcutDialogFragment(viewModel)  {
@@ -15,13 +16,15 @@ class BulkAddShortcutsDialogFragment(viewModel: ShortcutDialogViewModel) : Short
 
     lateinit var binding: BulkAddShortcutsBinding
     interface BulkAddListener {
-        fun onBulkAddShortcuts(rows: List<Pair<String, String>>)
+        fun onBulkAddShortcuts(rows: List<ShortcutRow>)
     }
 
     companion object {
         fun newInstance(viewModel: ShortcutDialogViewModel) = BulkAddShortcutsDialogFragment(viewModel)
         private const val NAMES = "names"
         private const val TEXTS = "texts"
+        private const val CURSORS = "cursors"
+        private const val CURSORS_SET = "cursorsSet"
         private const val SHOW_MISSING = "showMissing"
     }
 
@@ -30,6 +33,12 @@ class BulkAddShortcutsDialogFragment(viewModel: ShortcutDialogViewModel) : Short
     // Rows that were on screen when Add was tapped. Only their empty fields count as mistakes,
     // so a row still being typed into isn't flagged before it's finished.
     private val flagged = mutableSetOf<BulkAddRowBinding>()
+
+    // Rows whose cursor position the user has typed. The others keep it at the end of the text.
+    private val cursorSet = mutableSetOf<BulkAddRowBinding>()
+
+    // True while the dialog itself writes a cursor position, so that isn't taken as the user's.
+    private var followingText = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -54,8 +63,11 @@ class BulkAddShortcutsDialogFragment(viewModel: ShortcutDialogViewModel) : Short
 
         val names = savedInstanceState?.getStringArrayList(NAMES)
         val texts = savedInstanceState?.getStringArrayList(TEXTS)
-        if (names != null && texts != null && names.size == texts.size && names.isNotEmpty()) {
-            names.indices.forEach { addRow(names[it], texts[it]) }
+        val cursors = savedInstanceState?.getStringArrayList(CURSORS)
+        val cursorsSet = savedInstanceState?.getBooleanArray(CURSORS_SET)
+        if (names != null && texts != null && cursors != null && cursorsSet != null &&
+            setOf(names.size, texts.size, cursors.size, cursorsSet.size).size == 1 && names.isNotEmpty()) {
+            names.indices.forEach { addRow(names[it], texts[it], cursors[it], cursorsSet[it]) }
             if (savedInstanceState?.getBoolean(SHOW_MISSING) == true) flagged += rows
         } else {
             addRow()
@@ -65,7 +77,9 @@ class BulkAddShortcutsDialogFragment(viewModel: ShortcutDialogViewModel) : Short
         binding.btnCancelBulkShortcut.setOnClickListener { dismiss() }
         binding.btnSaveBulkShortcut.setOnClickListener {
             flagged += rows
-            val filled = entries().filter { (name, text) -> name.isNotEmpty() && text.isNotEmpty() }
+            val filled = rows
+                .filter { it.name().isNotEmpty() && it.text().isNotEmpty() }
+                .map { ShortcutRow(it.name(), it.text(), it.cursorIndex()) }
             if (refresh() && filled.isNotEmpty()) {
                 listener.onBulkAddShortcuts(filled)
                 dismiss()
@@ -82,9 +96,10 @@ class BulkAddShortcutsDialogFragment(viewModel: ShortcutDialogViewModel) : Short
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        val entries = entries()
-        outState.putStringArrayList(NAMES, ArrayList(entries.map { it.first }))
-        outState.putStringArrayList(TEXTS, ArrayList(entries.map { it.second }))
+        outState.putStringArrayList(NAMES, ArrayList(rows.map { it.name() }))
+        outState.putStringArrayList(TEXTS, ArrayList(rows.map { it.text() }))
+        outState.putStringArrayList(CURSORS, ArrayList(rows.map { it.rowCursor.text.toString() }))
+        outState.putBooleanArray(CURSORS_SET, rows.map { it in cursorSet }.toBooleanArray())
         outState.putBoolean(SHOW_MISSING, flagged.isNotEmpty())
     }
 
@@ -92,25 +107,55 @@ class BulkAddShortcutsDialogFragment(viewModel: ShortcutDialogViewModel) : Short
         super.onDestroyView()
         rows.clear()
         flagged.clear()
+        cursorSet.clear()
     }
 
     // A keyboard's suggestion often leaves a space after a word, which would let "mood " pass
     // as a new name beside "mood".
     private fun BulkAddRowBinding.name() = rowLabel.text.toString().trim()
 
-    private fun entries() = rows.map { it.name() to it.rowText.text.toString() }
+    private fun BulkAddRowBinding.text() = rowText.text.toString()
 
-    private fun addRow(name: String = "", text: String = "", focus: Boolean = false) {
+    // An empty position means the end of the text. A number too long for an Int is past any
+    // text's end, so it's refused like one.
+    private fun BulkAddRowBinding.cursorIndex(): Int {
+        val typed = rowCursor.text.toString()
+        return if (typed.isEmpty()) text().length else typed.toIntOrNull() ?: Int.MAX_VALUE
+    }
+
+    private fun BulkAddRowBinding.followText() {
+        followingText = true
+        rowCursor.setText(if (text().isEmpty()) "" else text().length.toString())
+        followingText = false
+    }
+
+    private fun addRow(
+        name: String = "", text: String = "", cursor: String? = null, cursorTyped: Boolean = false,
+        focus: Boolean = false
+    ) {
         val row = BulkAddRowBinding.inflate(layoutInflater, binding.bulkRows, true)
         // Every row's fields share IDs, so Android can't restore them; onSaveInstanceState does.
         row.rowLabel.isSaveEnabled = false
         row.rowText.isSaveEnabled = false
+        row.rowCursor.isSaveEnabled = false
         // The text is monospace, but its label and errors should match the name field's.
         row.rowTextLayout.typeface = Typeface.DEFAULT
         row.rowLabel.setText(name)
         row.rowText.setText(text)
+        if (cursor != null) row.rowCursor.setText(cursor) else row.followText()
+        if (cursorTyped) cursorSet += row
         row.rowLabel.doAfterTextChanged { refresh() }
-        row.rowText.doAfterTextChanged { refresh() }
+        row.rowText.doAfterTextChanged {
+            if (row !in cursorSet) row.followText()
+            refresh()
+        }
+        row.rowCursor.doAfterTextChanged {
+            if (!followingText) {
+                // Clearing the position hands it back to the end of the text.
+                if (it.isNullOrEmpty()) cursorSet -= row else cursorSet += row
+            }
+            refresh()
+        }
         row.removeRowButton.setOnClickListener { removeRow(row) }
         rows += row
         if (focus) row.rowLabel.requestFocus()
@@ -121,6 +166,7 @@ class BulkAddShortcutsDialogFragment(viewModel: ShortcutDialogViewModel) : Short
         binding.bulkRows.removeView(row.root)
         rows -= row
         flagged -= row
+        cursorSet -= row
         if (rows.isEmpty()) addRow(focus = true)
         refresh()
     }
@@ -136,7 +182,7 @@ class BulkAddShortcutsDialogFragment(viewModel: ShortcutDialogViewModel) : Short
         var mistakes = false
         rows.forEachIndexed { index, row ->
             val name = row.name()
-            val text = row.rowText.text.toString()
+            val text = row.text()
             val blank = name.isEmpty() && text.isEmpty()
             val showMissing = row in flagged && !blank
             val nameError = when {
@@ -146,10 +192,12 @@ class BulkAddShortcutsDialogFragment(viewModel: ShortcutDialogViewModel) : Short
                 else -> null
             }
             val textError = if (showMissing && !viewModel.isTextValid(text)) R.string.emptyTextError else null
-            row.rowLabelLayout.setErrorIfChanged(nameError)
-            row.rowTextLayout.setErrorIfChanged(textError)
+            val cursorError = if (!blank && row.cursorIndex() > text.length) getString(R.string.cursorPastEndError, text.length) else null
+            row.rowLabelLayout.setErrorIfChanged(nameError?.let { getString(it) })
+            row.rowTextLayout.setErrorIfChanged(textError?.let { getString(it) })
+            row.rowCursorLayout.setErrorIfChanged(cursorError)
             row.removeRowButton.contentDescription = getString(R.string.bulk_add_remove_row, index + 1)
-            if (nameError != null || textError != null) mistakes = true
+            if (nameError != null || textError != null || cursorError != null) mistakes = true
             if (name.isNotEmpty() && text.isNotEmpty()) complete++
             if (!blank) started = true
         }
@@ -163,8 +211,7 @@ class BulkAddShortcutsDialogFragment(viewModel: ShortcutDialogViewModel) : Short
     }
 
     // Setting the same error again would make TalkBack announce it on every keystroke.
-    private fun TextInputLayout.setErrorIfChanged(id: Int?) {
-        val message = id?.let { getString(it) }
+    private fun TextInputLayout.setErrorIfChanged(message: String?) {
         if (error?.toString() != message) error = message
     }
 }

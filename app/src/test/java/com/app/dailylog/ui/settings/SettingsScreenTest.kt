@@ -20,10 +20,12 @@ import com.app.dailylog.MainActivity
 import com.app.dailylog.R
 import com.app.dailylog.repository.Constants
 import com.app.dailylog.repository.Shortcut
+import com.app.dailylog.repository.ShortcutDatabase
 import com.app.dailylog.repository.ShortcutType
 import com.app.dailylog.testutil.AppRobolectricTest
 import com.google.android.material.slider.Slider
 import com.google.android.material.textfield.TextInputLayout
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -280,6 +282,8 @@ class SettingsScreenTest : AppRobolectricTest() {
         row(index).findViewById<EditText>(R.id.rowText).setText(text)
     }
 
+    private fun DialogFragment.cursor(index: Int) = row(index).findViewById<EditText>(R.id.rowCursor)
+
     private fun DialogFragment.rowError(index: Int, layout: Int) =
         row(index).findViewById<TextInputLayout>(layout).error?.toString()
 
@@ -311,6 +315,105 @@ class SettingsScreenTest : AppRobolectricTest() {
                 assertEquals("- [ ] three".length, added.getValue("Third").cursorIndex)
                 assertEquals(ShortcutType.TEXT, added.getValue("Third").type)
                 assertEquals(ShortcutType.DATETIME, added.getValue("Date").type)
+            }
+        }
+    }
+
+    @Test
+    fun bulkAdd_cursorFollowsTheEndOfTheTextAsItIsTyped() {
+        openSettings().use { scenario ->
+            scenario.onActivity { activity ->
+                val dialog = activity.openBulkAdd()
+                val text = dialog.row(0).findViewById<EditText>(R.id.rowText)
+                dialog.row(0).findViewById<EditText>(R.id.rowLabel).setText("Mood")
+                text.setText("mood")
+                assertEquals("4", dialog.cursor(0).text.toString())
+                text.setText("mood: ")
+                assertEquals("6", dialog.cursor(0).text.toString())
+                text.setText("mo")
+                assertEquals("2", dialog.cursor(0).text.toString())
+                text.setText("mood, energy: ")
+
+                dialog.click(R.id.btnSaveBulkShortcut)
+
+                activity.labelsBecome(listOf("First", "Second", "Mood"))
+                assertEquals("mood, energy: ".length, activity.shortcuts().single { it.label == "Mood" }.cursorIndex)
+            }
+        }
+    }
+
+    @Test
+    fun bulkAdd_aTypedCursorStaysPutWhenTheTextChanges() {
+        openSettings().use { scenario ->
+            scenario.onActivity { activity ->
+                val dialog = activity.openBulkAdd()
+                dialog.fillRow(0, "Bold", "****")
+                dialog.cursor(0).setText("2")
+                dialog.row(0).findViewById<EditText>(R.id.rowText).setText("**  **")
+                assertEquals("2", dialog.cursor(0).text.toString())
+                dialog.click(R.id.btnAddRow)
+                dialog.fillRow(1, "Link", "[[]]")
+                dialog.cursor(1).setText("2")
+                dialog.click(R.id.btnAddRow)
+                dialog.fillRow(2, "Mood", "mood")
+
+                // Removing a row moves the ones below it up; each keeps its own cursor state.
+                dialog.row(0).findViewById<View>(R.id.removeRowButton).performClick()
+                dialog.row(0).findViewById<EditText>(R.id.rowText).setText("[[ ]]")
+                assertEquals("2", dialog.cursor(0).text.toString())
+                dialog.row(1).findViewById<EditText>(R.id.rowText).setText("mood: ")
+                assertEquals("6", dialog.cursor(1).text.toString())
+
+                dialog.click(R.id.btnSaveBulkShortcut)
+
+                activity.labelsBecome(listOf("First", "Second", "Link", "Mood"))
+                val added = activity.shortcuts().associateBy { it.label }
+                assertEquals(2, added.getValue("Link").cursorIndex)
+                assertEquals(6, added.getValue("Mood").cursorIndex)
+            }
+        }
+    }
+
+    @Test
+    fun bulkAdd_clearingTheCursorPutsItBackAtTheEnd() {
+        openSettings().use { scenario ->
+            scenario.onActivity { activity ->
+                val dialog = activity.openBulkAdd()
+                dialog.fillRow(0, "Mood", "mood")
+                dialog.cursor(0).setText("1")
+                dialog.cursor(0).setText("")
+                dialog.row(0).findViewById<EditText>(R.id.rowText).setText("mood: ")
+                assertEquals("6", dialog.cursor(0).text.toString())
+            }
+        }
+    }
+
+    @Test
+    fun bulkAdd_aCursorPastTheEndOfTheTextIsMarkedAndBlocksAdd() {
+        openSettings().use { scenario ->
+            scenario.onActivity { activity ->
+                val dialog = activity.openBulkAdd()
+                dialog.fillRow(0, "Wrap", "**bold**")
+                dialog.cursor(0).setText("6")
+                assertEquals(null, dialog.rowError(0, R.id.rowCursorLayout))
+                assertTrue(dialog.addButton().isEnabled)
+
+                // The typed position stays put, so shortening the text can leave it past the end.
+                dialog.row(0).findViewById<EditText>(R.id.rowText).setText("****")
+                assertEquals(context.getString(R.string.cursorPastEndError, 4), dialog.rowError(0, R.id.rowCursorLayout))
+                assertFalse(dialog.addButton().isEnabled)
+
+                // Too long for an Int is past the end too, not a crash.
+                dialog.cursor(0).setText("99999999999")
+                assertEquals(context.getString(R.string.cursorPastEndError, 4), dialog.rowError(0, R.id.rowCursorLayout))
+
+                // Some keyboards type their own script's digits.
+                dialog.cursor(0).setText("\u0662")
+                assertEquals(null, dialog.rowError(0, R.id.rowCursorLayout))
+                dialog.click(R.id.btnSaveBulkShortcut)
+
+                activity.labelsBecome(listOf("First", "Second", "Wrap"))
+                assertEquals(2, activity.shortcuts().single { it.label == "Wrap" }.cursorIndex)
             }
         }
     }
@@ -392,6 +495,7 @@ class SettingsScreenTest : AppRobolectricTest() {
             scenario.onActivity { activity ->
                 val dialog = activity.openBulkAdd()
                 dialog.fillRow(0, "Third", "three")
+                dialog.cursor(0).setText("1")
                 dialog.click(R.id.btnAddRow)
                 dialog.fillRow(1, "Fourth", "four")
             }
@@ -404,11 +508,24 @@ class SettingsScreenTest : AppRobolectricTest() {
                 assertEquals("Fourth", dialog.row(1).findViewById<EditText>(R.id.rowLabel).text.toString())
                 assertEquals("four", dialog.row(1).findViewById<EditText>(R.id.rowText).text.toString())
                 assertEquals("Add 2", dialog.addButton().text.toString())
+                // The typed cursor stays put and the other still follows its text.
+                dialog.row(0).findViewById<EditText>(R.id.rowText).setText("three!")
+                dialog.row(1).findViewById<EditText>(R.id.rowText).setText("four!")
+                assertEquals("1", dialog.cursor(0).text.toString())
+                assertEquals("5", dialog.cursor(1).text.toString())
                 dialog.click(R.id.btnSaveBulkShortcut)
                 // The recreated activity's repository has no observer (the view model kept the
                 // old one), so ask the database rather than its LiveData.
-                val saved = { label: String -> runBlocking { activity.repository.shortcutDao.labelExistsSuspend(label) } }
-                assertTrue(idleUntil { saved("Third") && saved("Fourth") })
+                val cursorOf = { label: String ->
+                    runBlocking(Dispatchers.IO) {
+                        ShortcutDatabase.getDatabase(activity)
+                            .query("SELECT cursorIndex FROM Shortcut WHERE label = ?", arrayOf(label))
+                            .use { if (it.moveToFirst()) it.getInt(0) else null }
+                    }
+                }
+                assertTrue(idleUntil { cursorOf("Third") != null && cursorOf("Fourth") != null })
+                assertEquals(1, cursorOf("Third"))
+                assertEquals("four!".length, cursorOf("Fourth"))
                 assertFalse(dialog.isAdded)
             }
         }

@@ -3,6 +3,9 @@ package com.app.dailylog.repository
 import androidx.lifecycle.LiveData
 import com.app.dailylog.utils.FileNameTemplate
 
+/** One row of the "Add several shortcuts" dialog. [cursorIndex] counts characters of [text] as typed. */
+data class ShortcutRow(val label: String, val text: String, val cursorIndex: Int)
+
 interface ShortcutRepositoryInterface {
     val shortcutDao: ShortcutDao
 
@@ -65,18 +68,18 @@ interface ShortcutRepositoryInterface {
     }
 
     /**
-     * Adds shortcuts from bulk add's rows of name and text, after the existing ones. Each puts the
-     * cursor after its text, and is a date shortcut when its text holds a {DATETIME: …} token.
-     * Rows with a name that's taken or a blank field are skipped.
+     * Adds shortcuts from bulk add's rows, after the existing ones. Each is a date shortcut when
+     * its text holds a {DATETIME: …} token. Rows with a name that's taken or a blank field are
+     * skipped, and a cursor index outside the text is kept inside it.
      */
-    suspend fun addShortcuts(rows: List<Pair<String, String>>) {
+    suspend fun addShortcuts(rows: List<ShortcutRow>) {
         val start = nextShortcutPosition()
         val shortcuts = rows
-            .filter { (label, text) -> label.isNotEmpty() && text.isNotEmpty() && !shortcutDao.labelExistsSuspend(label) }
-            .distinctBy { it.first }
-            .mapIndexed { index, (label, text) ->
+            .filter { row -> row.label.isNotEmpty() && row.text.isNotEmpty() && !shortcutDao.labelExistsSuspend(row.label) }
+            .distinctBy { it.label }
+            .mapIndexed { index, (label, text, cursorIndex) ->
                 val type = if (FileNameTemplate.DATETIME_TOKEN.containsMatchIn(text)) ShortcutType.DATETIME else ShortcutType.TEXT
-                Shortcut(label = label, value = text, cursorIndex = text.length, position = start + index, type = type)
+                Shortcut(label = label, value = text, cursorIndex = cursorIndex.coerceIn(0, text.length), position = start + index, type = type)
             }
         shortcutDao.addAll(*shortcuts.toTypedArray())
     }

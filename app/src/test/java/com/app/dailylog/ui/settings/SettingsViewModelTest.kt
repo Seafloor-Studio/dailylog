@@ -3,6 +3,7 @@ package com.app.dailylog.ui.settings
 import android.net.Uri
 import com.app.dailylog.repository.RepositoryInterface
 import com.app.dailylog.repository.Shortcut
+import com.app.dailylog.repository.ShortcutRow
 import com.app.dailylog.utils.DetermineBuildInterface
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -89,7 +90,7 @@ class SettingsViewModelTest {
     fun `test repository called when addShortcuts called`(): Unit = runBlocking {
         `when`(buildMock.isOreoOrGreater()).thenReturn(false)
         settingsViewModel = SettingsViewModel(repository, buildMock, { _: String -> }, testDispatcher)
-        val rows = listOf("hello" to "hello")
+        val rows = listOf(ShortcutRow("hello", "hello", 5))
         settingsViewModel!!.addShortcuts(rows)
         verify(repository).addShortcuts(rows)
     }
