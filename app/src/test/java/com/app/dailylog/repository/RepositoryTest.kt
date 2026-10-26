@@ -216,6 +216,29 @@ class RepositoryTest {
     }
 
     @Test
+    fun addShortcuts_fromRows_keepsTheirCursorAndSpotsDates() = runBlocking {
+        repository.addShortcut("a", "one", 0, ShortcutType.TEXT)
+        shortcuts()
+        repository.addShortcuts(
+            listOf(
+                ShortcutRow("mood", "\"mood, energy\": ", 1),
+                ShortcutRow("date", "## {DATETIME: yyyy-MM-dd}\n", 3),
+                ShortcutRow("a", "taken name", 0),
+                ShortcutRow("mood", "same name twice", 0),
+            )
+        )
+        val added = shortcuts()
+        assertEquals(listOf("a" to 0, "mood" to 1, "date" to 2), added.map { it.label to it.position })
+        val mood = added.single { it.label == "mood" }
+        assertEquals("\"mood, energy\": ", mood.value)
+        assertEquals(1, mood.cursorIndex)
+        assertEquals(ShortcutType.TEXT, mood.type)
+        val date = added.single { it.label == "date" }
+        assertEquals(3, date.cursorIndex)
+        assertEquals(ShortcutType.DATETIME, date.type)
+    }
+
+    @Test
     fun isLabelValid_whenTheListHasNotLoadedYet() {
         // No observer on this instance, so its LiveData has never emitted and its value is
         // null. That is the state a bulk add hits when it runs before Room's first emission,

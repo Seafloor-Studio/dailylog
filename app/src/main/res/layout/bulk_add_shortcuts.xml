@@ -1,71 +1,79 @@
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:padding="20dp"
-    app:layout_constraintVertical_chainStyle="packed">
+    android:layout_height="wrap_content">
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/addShortcutTitle"
-        style="@style/TextAppearance.MaterialComponents.Headline5"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/addBulkShortcut"
-        android:textColor="?attr/colorSecondary"
-        app:layout_constraintBottom_toTopOf="@id/instructions"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:orientation="vertical"
+        android:padding="20dp">
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/instructions"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="5dp"
-        android:text="@string/bulk_add_shortcuts_instructions"
-        app:layout_constraintBottom_toTopOf="@id/bulkInputLayout"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/addShortcutTitle" />
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/bulkInputLayout"
-        style="@style/SecondaryTextInputLayout"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="3dp"
-        app:errorEnabled="true"
-        app:layout_constraintBottom_toTopOf="@id/btnCancelBulkShortcut"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/instructions">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/bulkInput"
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/addShortcutTitle"
+            style="@style/TextAppearance.MaterialComponents.Headline5"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:importantForAutofill="no"
-            android:inputType="textMultiLine"
-            tools:text="really long text\nreally long text\nreally long text\nreally long text\nreally long text\nreally long text\nreally long text\nreally long text\nreally long text\n" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:gravity="center_horizontal"
+            android:text="@string/addBulkShortcut"
+            android:textColor="?attr/colorSecondary" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnCancelBulkShortcut"
-        style="@style/SecondaryTextButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/cancel"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        <com.google.android.material.textview.MaterialTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:gravity="center_horizontal"
+            android:text="@string/bulk_add_subtitle"
+            android:textAppearance="@style/TextItemDetail" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnSaveBulkShortcut"
-        style="@style/SecondaryButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/save"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        <LinearLayout
+            android:id="@+id/bulkRows"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAddRow"
+            style="@style/SecondaryTextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/bulk_add_row"
+            app:icon="@drawable/ic_add_48"
+            app:iconSize="18dp"
+            app:iconTint="?attr/colorSecondary" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/bulkHelp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"
+            android:text="@string/bulk_add_help"
+            android:textAppearance="@style/TextItemDetail" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancelBulkShortcut"
+                style="@style/SecondaryTextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/cancel" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSaveBulkShortcut"
+                style="@style/SecondaryButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/bulk_add_none" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
