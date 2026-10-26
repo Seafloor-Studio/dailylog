@@ -146,6 +146,8 @@ class BulkAddShortcutsDialogFragment(viewModel: ShortcutDialogViewModel) : Short
         if (cursorTyped) cursorSet += row
         row.rowLabel.doAfterTextChanged { refresh() }
         row.rowText.doAfterTextChanged {
+            // Emptying the text starts the row over, as in the single Add dialog.
+            if (it.isNullOrEmpty()) cursorSet -= row
             if (row !in cursorSet) row.followText()
             refresh()
         }
@@ -192,7 +194,7 @@ class BulkAddShortcutsDialogFragment(viewModel: ShortcutDialogViewModel) : Short
                 else -> null
             }
             val textError = if (showMissing && !viewModel.isTextValid(text)) R.string.emptyTextError else null
-            val cursorError = if (!blank && row.cursorIndex() > text.length) getString(R.string.cursorPastEndError, text.length) else null
+            val cursorError = if (!blank && row.cursorIndex() > text.length) getString(R.string.cursorPastEndError) else null
             row.rowLabelLayout.setErrorIfChanged(nameError?.let { getString(it) })
             row.rowTextLayout.setErrorIfChanged(textError?.let { getString(it) })
             row.rowCursorLayout.setErrorIfChanged(cursorError)
@@ -210,7 +212,8 @@ class BulkAddShortcutsDialogFragment(viewModel: ShortcutDialogViewModel) : Short
         return !mistakes
     }
 
-    // Setting the same error again would make TalkBack announce it on every keystroke.
+    // Setting the same error again would make TalkBack announce it on every keystroke, so no
+    // message may change as the text is typed.
     private fun TextInputLayout.setErrorIfChanged(message: String?) {
         if (error?.toString() != message) error = message
     }

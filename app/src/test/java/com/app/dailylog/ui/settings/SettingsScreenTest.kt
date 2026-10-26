@@ -375,15 +375,22 @@ class SettingsScreenTest : AppRobolectricTest() {
     }
 
     @Test
-    fun bulkAdd_clearingTheCursorPutsItBackAtTheEnd() {
+    fun bulkAdd_clearingTheCursorOrTheTextPutsItBackAtTheEnd() {
         openSettings().use { scenario ->
             scenario.onActivity { activity ->
                 val dialog = activity.openBulkAdd()
                 dialog.fillRow(0, "Mood", "mood")
+                val text = dialog.row(0).findViewById<EditText>(R.id.rowText)
                 dialog.cursor(0).setText("1")
                 dialog.cursor(0).setText("")
-                dialog.row(0).findViewById<EditText>(R.id.rowText).setText("mood: ")
+                text.setText("mood: ")
                 assertEquals("6", dialog.cursor(0).text.toString())
+
+                // Emptying the text starts the row over too.
+                dialog.cursor(0).setText("1")
+                text.setText("")
+                text.setText("energy: ")
+                assertEquals("8", dialog.cursor(0).text.toString())
             }
         }
     }
@@ -400,12 +407,12 @@ class SettingsScreenTest : AppRobolectricTest() {
 
                 // The typed position stays put, so shortening the text can leave it past the end.
                 dialog.row(0).findViewById<EditText>(R.id.rowText).setText("****")
-                assertEquals(context.getString(R.string.cursorPastEndError, 4), dialog.rowError(0, R.id.rowCursorLayout))
+                assertEquals(context.getString(R.string.cursorPastEndError), dialog.rowError(0, R.id.rowCursorLayout))
                 assertFalse(dialog.addButton().isEnabled)
 
                 // Too long for an Int is past the end too, not a crash.
                 dialog.cursor(0).setText("99999999999")
-                assertEquals(context.getString(R.string.cursorPastEndError, 4), dialog.rowError(0, R.id.rowCursorLayout))
+                assertEquals(context.getString(R.string.cursorPastEndError), dialog.rowError(0, R.id.rowCursorLayout))
 
                 // Some keyboards type their own script's digits.
                 dialog.cursor(0).setText("\u0662")

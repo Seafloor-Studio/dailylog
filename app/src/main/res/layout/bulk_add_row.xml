@@ -63,6 +63,7 @@
                 android:imeOptions="actionNext"
                 android:importantForAutofill="no"
                 android:inputType="number"
+                android:selectAllOnFocus="true"
                 android:singleLine="true" />
         </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
