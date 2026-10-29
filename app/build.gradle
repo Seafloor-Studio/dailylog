@@ -89,7 +89,7 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.2.2'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.6.2'
-    implementation 'com.opencsv:opencsv:5.7.1'
+    implementation 'com.opencsv:opencsv:5.12.0'
     implementation 'com.google.code.gson:gson:2.14.0'
 
     // Room
