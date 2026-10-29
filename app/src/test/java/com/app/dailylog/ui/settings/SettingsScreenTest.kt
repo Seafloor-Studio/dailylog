@@ -16,6 +16,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.app.dailylog.MainActivity
 import com.app.dailylog.R
+import com.app.dailylog.repository.Constants
 import com.app.dailylog.repository.Shortcut
 import com.app.dailylog.repository.ShortcutType
 import com.app.dailylog.testutil.AppRobolectricTest
@@ -30,6 +31,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowPopupMenu
 import org.robolectric.shadows.ShadowDialog
+import org.robolectric.shadows.ShadowToast
 import java.io.File
 
 @RunWith(AndroidJUnit4::class)
@@ -378,6 +380,91 @@ class SettingsScreenTest : AppRobolectricTest() {
         }
         assertEquals(original, other.readText())
         other.delete()
+    }
+
+    private fun MainActivity.backToLog(): EditText {
+        repeat(2) { onBackPressedDispatcher.onBackPressed() }
+        assertTrue(idleUntil { findViewById<EditText>(R.id.todayLog) != null })
+        return findViewById(R.id.todayLog)
+    }
+
+    private fun MainActivity.shownFileName() = findViewById<TextView>(R.id.fileName).text.toString()
+
+    @Test
+    fun newFile_switchesToTheCreatedFileAndStartsItsCursorAfresh() {
+        // The save-as screen creates the (empty) file before handing back its URI.
+        val created = File(context.filesDir, "garden-notes.md").apply { writeText("") }
+        val oldUri = Uri.fromFile(logFile)
+        val grant = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        context.contentResolver.takePersistableUriPermission(oldUri, grant)
+        context.getSharedPreferences("SharedPreferences", android.content.Context.MODE_PRIVATE)
+            .edit().putInt(Constants.CURSOR_KEY, 4).commit()
+        openSettings().use { scenario ->
+            scenario.onActivity { activity ->
+                activity.openLogFile()
+                activity.findViewById<View>(R.id.newFileButton).performClick()
+                val saveAs = activity.answerFilePicker(Uri.fromFile(created))
+                assertEquals(Intent.ACTION_CREATE_DOCUMENT, saveAs.action)
+                assertEquals("text/markdown", saveAs.type)
+                assertEquals("journal.md", saveAs.getStringExtra(Intent.EXTRA_TITLE))
+
+                assertEquals(created.name, activity.shownFileName())
+                assertEquals("Now writing to ${created.name}", ShadowToast.getTextOfLatestToast())
+                assertEquals(Uri.fromFile(created).toString(), activity.repository.retrieveFilename())
+                assertEquals(
+                    listOf(Uri.fromFile(created)),
+                    context.contentResolver.persistedUriPermissions.map { it.uri }
+                )
+
+                val log = activity.backToLog()
+                assertEquals("", log.text.toString())
+                assertEquals(Constants.DEFAULT_CURSOR_INDEX, activity.repository.getCursorIndex())
+                log.setText("planted tomatoes\n")
+                activity.findViewById<View>(R.id.btnSave).performClick()
+            }
+        }
+        assertEquals("planted tomatoes\n", created.readText())
+        assertEquals("Existing log\n", logFile.readText())
+        created.delete()
+    }
+
+    @Test
+    fun newFile_resultArrivingAfterRecreation_stillSwitchesFile() {
+        val created = File(context.filesDir, "trail-log.md").apply { writeText("") }
+        openSettings().use { scenario ->
+            lateinit var saveAs: Intent
+            scenario.onActivity { activity ->
+                activity.openLogFile()
+                activity.findViewById<View>(R.id.newFileButton).performClick()
+                saveAs = shadowOf(activity).nextStartedActivityForResult.intent
+            }
+            // A rotation while the save-as screen is in front.
+            scenario.recreate()
+            scenario.onActivity { activity ->
+                shadowOf(activity).receiveResult(saveAs, Activity.RESULT_OK, Intent().setData(Uri.fromFile(created)))
+                assertTrue(idleUntil { activity.shownFileName() == created.name })
+                assertEquals(Uri.fromFile(created).toString(), activity.repository.retrieveFilename())
+            }
+        }
+        created.delete()
+    }
+
+    @Test
+    fun newFile_cancelled_keepsTheCurrentFile() {
+        openSettings().use { scenario ->
+            scenario.onActivity { activity ->
+                activity.openLogFile()
+                activity.findViewById<View>(R.id.newFileButton).performClick()
+                val request = shadowOf(activity).nextStartedActivityForResult
+                assertNotNull("expected the save-as screen", request)
+                shadowOf(activity).receiveResult(request.intent, Activity.RESULT_CANCELED, null)
+                shadowOf(android.os.Looper.getMainLooper()).idle()
+
+                assertEquals(logFile.name, activity.shownFileName())
+                assertEquals(Uri.fromFile(logFile).toString(), activity.repository.retrieveFilename())
+                assertEquals("Existing log\n", activity.backToLog().text.toString())
+            }
+        }
     }
 
     @Test
