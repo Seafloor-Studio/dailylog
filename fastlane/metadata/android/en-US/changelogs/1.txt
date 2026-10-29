@@ -1,3 +1,3 @@
 Initial release!
 
-This is the first release of dailyLog, a note-taking app optimized for quick logging with customizable shortcuts. This release is compatible with Android 6 through 11. See the [original release notes](https://github.com/madCode/dailylog/releases/tag/v1.0.0) for details.
+This is the first release of dailyLog, a note-taking app optimized for quick logging with customizable shortcuts. This release is compatible with Android 6 through 11. See the [original release notes](https://github.com/Seafloor-Studio/dailylog/releases/tag/v1.0.0) for details.

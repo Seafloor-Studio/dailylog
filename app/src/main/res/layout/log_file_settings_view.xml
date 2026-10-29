@@ -56,8 +56,7 @@
             android:id="@+id/fileRow"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
+            android:orientation="vertical"
             android:paddingHorizontal="10dp"
             android:paddingTop="16dp">
 
@@ -68,24 +67,39 @@
                 android:layout_height="wrap_content"
                 android:text="@string/fileNameTitle" />
 
+            <!-- Wraps rather than ellipsizing: a cut-off name can look like a different file. -->
             <TextView
                 android:id="@+id/fileName"
                 style="@style/TextAppearance.MaterialComponents.Subtitle1"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="10dp"
-                android:layout_weight="1"
-                android:ellipsize="start"
-                android:gravity="end"
-                android:singleLine="true"
+                android:layout_marginTop="4dp"
                 android:textColor="?android:attr/textColorSecondary"
                 tools:text="journal.md" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/selectFileButton"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/select_file" />
+                android:layout_marginTop="8dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/selectFileButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="5dp"
+                    android:layout_weight="1"
+                    android:text="@string/select_file" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/newFileButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="5dp"
+                    android:layout_weight="1"
+                    android:text="@string/new_file" />
+            </LinearLayout>
         </LinearLayout>
 
         <!-- New file by date -->

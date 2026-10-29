@@ -45,7 +45,22 @@
         <item name="android:textStyle">normal</item>
     </style>
 
-    <style name="TextCaption" parent="TextAppearance.MaterialComponents.Caption">
-        <item name="android:textSize">20sp</item>
+    <!-- Type scale for Settings: every section title (File, Appearance, Shortcuts) uses
+         TextHeadline (20sp), a shortcut's name TextItemTitle (16sp), and details TextItemDetail
+         or TextCaption (14sp). -->
+    <style name="TextItemTitle" parent="TextAppearance.MaterialComponents.Subtitle1">
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="TextItemDetail" parent="TextAppearance.MaterialComponents.Body2">
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
+    </style>
+
+    <!-- A shortcut's text is markdown, and monospace keeps its brackets and spaces legible. -->
+    <style name="TextCaption" parent="TextItemDetail">
+        <item name="fontFamily">monospace</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:letterSpacing">0</item>
     </style>
 </resources>

@@ -1,0 +1,60 @@
+name: ADI registration APK
+
+# Run by hand, once: builds a release-signed APK that proves to Google Play
+# (Android developer verification) that we hold the signing key for
+# com.app.dailylog. The assets file exists only inside this build: it is never
+# committed, so the APK users and F-Droid get is unchanged.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Decode keystore
+        run: |
+          # Not in the workspace, as in draft-release.yml.
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > "$RUNNER_TEMP/release.jks"
+
+      - name: Add the Play Console registration snippet
+        # The snippet identifies the developer account; it is not a secret.
+        run: |
+          mkdir -p app/src/main/assets
+          printf '%s' 'D7ZGIHJHPXUX2AAAAAAAAAAAAA' > app/src/main/assets/adi-registration.properties
+
+      - name: Build signed release APK
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/release.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew assembleRelease
+
+      - name: Check the snippet and the signing key
+        run: |
+          apk=app/build/outputs/apk/release/app-release.apk
+          unzip -p "$apk" assets/adi-registration.properties | grep -qx 'D7ZGIHJHPXUX2AAAAAAAAAAAAA'
+          apksigner=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner
+          "$apksigner" verify --print-certs "$apk" | tee certs.txt
+          grep -qi 'SHA-256 digest: 349d41f22f721c6faaf8dd70be387ff296effd33156baabcae79b3d068aff7e6' certs.txt
+          cp "$apk" dailylog-adi-registration.apk
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: adi-registration-apk
+          path: dailylog-adi-registration.apk
+          retention-days: 7

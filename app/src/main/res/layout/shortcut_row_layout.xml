@@ -18,7 +18,7 @@
             android:id="@+id/dragIndicator"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:alpha="0.2"
+            android:alpha="0.55"
             android:contentDescription="@string/drag_icon"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_drag_indicator_48"
@@ -28,8 +28,7 @@
 
         <TextView
             android:id="@+id/label"
-            style="@style/TextAppearance.MaterialComponents.Body1"
-            android:textSize="20sp"
+            style="@style/TextItemTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingStart="5dp"
@@ -61,14 +60,15 @@
 
         <ImageButton
             android:id="@+id/removeShortcutButton"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginEnd="10dp"
-            android:alpha="0.6"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="4dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/delete"
+            android:padding="12dp"
             android:scaleType="fitCenter"
-            android:src="@drawable/ic_cancel_48"
+            android:src="@drawable/ic_close_24"
+            app:tint="?android:attr/textColorSecondary"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

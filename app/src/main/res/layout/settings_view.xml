@@ -40,7 +40,7 @@
 
         <TextView
             android:id="@+id/logFileValue"
-            style="@style/TextAppearance.MaterialComponents.Subtitle1"
+            style="@style/TextItemDetail"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="10dp"
@@ -48,7 +48,6 @@
             android:ellipsize="start"
             android:gravity="end"
             android:singleLine="true"
-            android:textColor="?android:attr/textColorSecondary"
             tools:text="really really really long/path/to/journal.md" />
 
         <ImageView
@@ -82,7 +81,7 @@
 
         <TextView
             android:id="@+id/appearanceValue"
-            style="@style/TextAppearance.MaterialComponents.Subtitle1"
+            style="@style/TextItemDetail"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="10dp"
@@ -90,7 +89,6 @@
             android:ellipsize="end"
             android:gravity="end"
             android:singleLine="true"
-            android:textColor="?android:attr/textColorSecondary"
             tools:text="Default" />
 
         <ImageView
@@ -110,9 +108,7 @@
         android:background="?android:attr/listDivider"
         app:layout_constraintTop_toBottomOf="@id/appearanceRow" />
 
-    <!-- Kept as the headline it has always been: the section is the screen's subject,
-         not a label on a settings block.
-         Its overflow stays with it rather than moving to the toolbar: every item in that menu
+    <!-- Its overflow stays with it rather than moving to the toolbar: every item in that menu
          acts on the shortcut list, and a screen-level bar would imply it covers the file settings
          too. -->
     <TextView

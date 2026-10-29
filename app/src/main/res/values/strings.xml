@@ -25,6 +25,9 @@
     <string name="defaultStringPlaceholder">%1$s</string>
     <string name="fileNameTitle">Current file</string>
     <string name="select_file">Select file</string>
+    <string name="new_file">New file</string>
+    <string name="now_writing_to">Now writing to %1$s</string>
+    <string name="file_permission_denied">Couldn\'t get permission to write to that file. Try another one.</string>
     <string name="settings">settings</string>
     <string name="delete">delete</string>
     <string name="drag_icon">drag icon</string>
