@@ -33,7 +33,13 @@ class RepositoryTest {
         repository = Repository(context)
         // Validation and positions read the LiveData's value, which only updates while observed.
         repository.getAllShortcuts().observeForever(keepLiveDataActive)
-        idle()
+        // Exports write nothing until Room's first load lands, which can take longer than idle()
+        // on a busy runner.
+        val deadline = System.currentTimeMillis() + 5000
+        while (repository.getAllShortcuts().value == null) {
+            assertTrue("shortcuts never loaded", System.currentTimeMillis() < deadline)
+            idle()
+        }
     }
 
     @After

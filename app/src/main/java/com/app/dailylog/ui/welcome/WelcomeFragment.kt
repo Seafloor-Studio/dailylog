@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import com.app.dailylog.R
 import com.app.dailylog.databinding.WelcomeFragmentBinding
+import com.app.dailylog.utils.NewLogFile
 
 class WelcomeFragment(private val viewModel: WelcomeViewModel) : Fragment() {
     private lateinit var binding: WelcomeFragmentBinding
@@ -45,13 +46,7 @@ class WelcomeFragment(private val viewModel: WelcomeViewModel) : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         binding = WelcomeFragmentBinding.bind(view)
         binding.createFileButton.setOnClickListener {
-            val intent =
-            Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "text/markdown"
-                putExtra(Intent.EXTRA_TITLE, "journal.md")
-            }
-            val filePickerIntent = Intent.createChooser(intent, "Create file")
+            val filePickerIntent = Intent.createChooser(NewLogFile.intent(), "Create file")
             filePickerActivityResult.launch(filePickerIntent)
         }
         binding.selectFileButton.setOnClickListener {

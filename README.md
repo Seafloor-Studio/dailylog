@@ -6,7 +6,7 @@ DailyLog enables you to rapid log with customizable shortcuts. Tired of trying t
      alt="Get it on F-Droid"
      height="80">](https://f-droid.org/packages/com.app.dailylog/)
 
-Or download the latest APK from the [Releases Section](https://github.com/madCode/dailylog/releases/latest).
+Or download the latest APK from the [Releases Section](https://github.com/Seafloor-Studio/dailylog/releases/latest).
 
 Initially designed as a rapid logging system for journaling, DailyLog allows you to quickly add info to a text file with customizable button shortcuts. Here's how it works:
 
@@ -43,7 +43,7 @@ If you're using DailyLog, it's likely because you have a format you like to jour
 
 <img alt="Screen as described below" src="/README_screenshots/blank_settings_screen.png" height="500px"/>
 
-You'll see at the top the option to change the file you're working in, then an "Appearance" section for the editor's text size, and under that a section labeled "Shortcuts" with a three dot menu next to it. At the bottom of the screen you'll see a big blue circle with a plus in it. Click the plus button.
+You'll see at the top a **File** row to change the file you're working in (see [Switching to another file](#switching-to-another-file)), then an "Appearance" row for the editor's text size, and under that a section labeled "Shortcuts" with a three dot menu next to it. At the bottom of the screen you'll see a big blue circle with a plus in it. Click the plus button.
 
 <img alt="Shorcut creation dialog. Description below." src="/README_screenshots/empty_shortcut_create.png" height="500px"/>
 
@@ -106,8 +106,14 @@ Now if you hit the calendar shortcut, you get the date!
 
 A description of the available datetime patterns can be found in the [Java documentation of DateTimeFormatter](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html#patterns).
 
+## Switching to another file
+Open settings and tap **File**. In "One file" mode it shows the file you're writing to, with two buttons:
+
+- **Select file** switches to a file you already have.
+- **New file** opens Android's save screen with the name `journal.md` filled in. Rename it if you like and save. The app starts writing to the new file; your old file stays as it is, and you can switch back to it with **Select file**.
+
 ## A new file each day
-If you'd rather keep one file per day, open settings and switch **Log file** from "One file" to "New file by date". Pick a folder once (for example `Documents/Journal`), and the app writes each day to its own file in that folder.
+If you'd rather keep one file per day, open settings, tap **File**, and switch from "One file" to "New file by date". Pick a folder once (for example `Documents/Journal`), and the app writes each day to its own file in that folder.
 
 The **File name** uses the same `{DATETIME: ...}` patterns as shortcuts, and can include folders. For example, `{DATETIME: yyyy}/{DATETIME: MM-dd}-journal.md` writes to `2026/10-03-journal.md`. Tap one of the dates under the name to change the date order but keep the rest of the name. Names can't contain `\ : * ? " < > |`, because phone storage renames them. The line below shows today's file.
 
@@ -134,6 +140,9 @@ There is also an option to import from the legacy CSV format ("Restore an old CS
 The other option is to use the bulk add feature. This shows you a text box and allows you to type in values. You don't need to wrap everything in quotes, but you do still need to follow the label, text, cursorIndex, shortcutType order.
 
 If a shortcut's text contains a comma, wrap the text in quotes, e.g. `Greeting,"hello, world",5,TEXT`. Labels can't contain commas in bulk add; use the single add dialog for those.
+
+# Privacy
+DailyLog has no accounts, ads, analytics or crash reporting, declares no Android permissions, and contains no networking code. The full [privacy policy](docs/PRIVACY.md) says what it keeps and where.
 
 # Known Issues
 ## I can't edit the file I selected! When I edit and hit save, all my edits disappear!

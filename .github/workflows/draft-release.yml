@@ -4,16 +4,25 @@ on:
   push:
     tags:
       - 'v*'
+  # A manual run builds and checks both outputs but drafts nothing. It is here to prove the
+  # signing config and the two output paths without creating a release, and without uploading
+  # the artifacts: this repo is public, and a workflow artifact would put a signed, installable
+  # build in the open before anyone meant to publish one.
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   release:
-    # Only to attach the APK to the release it drafts.
+    # Only to attach the APK and AAB to the release it drafts, which a manual run doesn't do.
     permissions:
       contents: write
     runs-on: ubuntu-latest
+    env:
+      # Named once: the check step and the release step must not drift apart on these.
+      APK: app/build/outputs/apk/release/app-release.apk
+      AAB: app/build/outputs/bundle/release/app-release.aab
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -33,15 +42,30 @@ jobs:
           # would take the signing key with it.
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > "$RUNNER_TEMP/release.jks"
 
-      - name: Build signed release APK
+      - name: Build signed release APK and AAB
         env:
           KEYSTORE_PATH: ${{ runner.temp }}/release.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew assembleRelease
+        # One Gradle run, one signingConfig, so the AAB for Play carries the same signature as
+        # the APK F-Droid verifies against AllowedAPKSigningKeys. Play only distributes with
+        # that key if this keystore was uploaded as the app signing key when the app was
+        # created; otherwise Play signs with its own and the two builds diverge.
+        run: ./gradlew assembleRelease bundleRelease
+
+      - name: Check the build outputs
+        # F-Droid's Binaries URL names app-release.apk exactly, so a missing or renamed asset
+        # breaks its verification quietly. This is also the whole point of a manual run.
+        run: |
+          for f in "$APK" "$AAB"; do
+            [ -f "$f" ] || { echo "::error::expected build output missing: $f"; exit 1; }
+            echo "$f  $(stat -c %s "$f") bytes"
+          done
 
       - name: Draft the GitHub release
+        # Tag pushes only: a manual run has no tag to verify or name a release after.
+        if: github.event_name == 'push'
         # gh rather than a third-party action: this is the one step holding a token that can
         # write a release, so it's the step worth keeping in the runner's own tooling.
         # zizmor flags the action as superfluous for the same reason, and newspaperss does this.
@@ -50,8 +74,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           tag="$GITHUB_REF_NAME"
-          apk=app/build/outputs/apk/release/app-release.apk
           code=$(sed -n 's/^ *versionCode \([0-9]*\)$/\1/p' app/build.gradle)
           notes="fastlane/metadata/android/en-US/changelogs/$code.txt"
           if [ -f "$notes" ]; then notes_flag=(--notes-file "$notes"); else notes_flag=(--notes "DailyLog ${tag#v}"); fi
-          gh release create "$tag" "$apk" --draft --verify-tag --title "DailyLog ${tag#v}" "${notes_flag[@]}"
+          gh release create "$tag" "$APK" "$AAB" --draft --verify-tag --title "DailyLog ${tag#v}" "${notes_flag[@]}"
