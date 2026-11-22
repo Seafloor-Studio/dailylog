@@ -17,7 +17,7 @@ Each fragment takes a pre-constructed ViewModel (not a factory lookup) passed fr
 
 `Repository` implements `RepositoryInterface`, which composes:
 
-- **`FileRepositoryInterface`** — reads/writes the user's log file via Android `ContentResolver` (URI-based access). Uses MD5 hashing to implement smart save (skip if unchanged). File URI and cursor index are stored in `SharedPreferences`.
+- **`FileRepositoryInterface`** — reads/writes the user's log file via Android `ContentResolver` (URI-based access). Uses MD5 hashing to implement smart save (skip if unchanged). After a failed read it refuses every save until a read succeeds, so a blank editor is never written over the file. File URI and cursor index are stored in `SharedPreferences`.
 - **`ShortcutRepositoryInterface`** — CRUD operations against `ShortcutDao` (Room). Shortcuts have a `position` field for ordering; drag-to-reorder updates all positions. Bulk add validates each row (unique label, non-empty text, valid cursor index, valid type).
 
 ## Shortcut System
