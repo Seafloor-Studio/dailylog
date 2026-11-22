@@ -154,6 +154,36 @@ class DatedFileRepositoryTest {
     }
 
     @Test
+    fun aFileThatAppearsButCantBeRead_isLeftAlone() {
+        repository.setDatedMode(true)
+        repository.openCurrentFile(oct3)
+        repository.readFile(true)
+        File(folderDir, "2026").mkdirs()
+        File(folderDir, "2026/10-03-journal.md").writeText("from the laptop\n")
+        TestDocumentsProvider.failReads = true
+
+        assertFalse(repository.saveToFile("from the phone\n", false))
+        assertEquals("from the laptop\n", File(folderDir, "2026/10-03-journal.md").readText())
+    }
+
+    @Test
+    fun aFailedRead_doesNotBlockTheNextDaysNewFile() {
+        File(folderDir, "2026").mkdirs()
+        File(folderDir, "2026/10-03-journal.md").writeText("day one\n")
+        repository.setDatedMode(true)
+        repository.openCurrentFile(oct3)
+        TestDocumentsProvider.failReads = true
+        assertEquals("", repository.readFile(true))
+        assertFalse(repository.saveToFile("", false))
+
+        repository.openCurrentFile(oct4)
+        assertEquals("", repository.readFile(true))
+        assertTrue(repository.saveToFile("day two\n", false))
+        assertEquals("day two\n", File(folderDir, "2026/10-04-journal.md").readText())
+        assertEquals("day one\n", File(folderDir, "2026/10-03-journal.md").readText())
+    }
+
+    @Test
     fun aFileDeletedElsewhere_isNotRecreatedEmpty() {
         repository.setDatedMode(true)
         repository.openCurrentFile(oct3)

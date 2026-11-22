@@ -41,6 +41,7 @@ interface RepositoryInterface: FileRepositoryInterface, ShortcutRepositoryInterf
 class Repository(override val context: Context): RepositoryInterface {
     override lateinit var filename : String
     override var lastSavedContentsHash: String = ""
+    override var lastReadFailed: Boolean = false
     override var datedFilePath: String? = null
     override var shortcutDao = ShortcutDatabase.getDatabase(context).shortcutDao()
     override var shortcutLiveData: LiveData<List<Shortcut>> = shortcutDao.getAll()

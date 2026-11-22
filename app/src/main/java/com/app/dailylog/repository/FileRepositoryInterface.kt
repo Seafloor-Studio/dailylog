@@ -22,6 +22,11 @@ interface FileRepositoryInterface {
     var filename: String
     val context: Context
     var lastSavedContentsHash: String
+    /**
+     * True when the last read of [filename] failed. The editor then shows nothing, so a save would
+     * replace the whole file with whatever was typed over that blank.
+     */
+    var lastReadFailed: Boolean
     /** In dated mode, the path of the file being edited inside the log folder. */
     var datedFilePath: String?
 
@@ -117,12 +122,16 @@ interface FileRepositoryInterface {
     fun readFile(firstTime: Boolean): String {
         if (filename == Constants.FILE_NOT_CREATED) {
             if (firstTime) updateLastSavedHash("")
+            lastReadFailed = false
             return ""
         }
         try {
             val stringBuilder = StringBuilder()
             val uri = Uri.parse(filename)
-            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            // A provider may hand back no stream rather than throw; that's no more a read than an error.
+            val stream = context.contentResolver.openInputStream(uri)
+                ?: throw FileNotFoundException("No stream for $uri")
+            stream.use { inputStream ->
                 BufferedReader(InputStreamReader(inputStream)).use { reader ->
                     var line: String? = reader.readLine()
                     while (line != null) {
@@ -137,8 +146,10 @@ interface FileRepositoryInterface {
             if (firstTime) {
                 updateLastSavedHash(fileData)
             }
+            lastReadFailed = false
             return fileData
         } catch (ex: Exception) {
+            lastReadFailed = true
             Toast.makeText(context, ex.toString(), Toast.LENGTH_LONG)
                 .show()
         }
@@ -182,6 +193,10 @@ interface FileRepositoryInterface {
                     }
                     filename = created.toString()
                 }
+            }
+            if (lastReadFailed) {
+                Toast.makeText(context, R.string.log_not_read, Toast.LENGTH_LONG).show()
+                return false
             }
             val uri = Uri.parse(filename)
             val openFileDescriptor = context.contentResolver.openFileDescriptor(uri, "rwt")
