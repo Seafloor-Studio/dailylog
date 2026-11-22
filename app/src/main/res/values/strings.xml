@@ -63,6 +63,7 @@
     <string name="choose_folder">Choose folder</string>
     <string name="no_folder_chosen">Not available, choose it again</string>
     <string name="log_folder_missing">Can\'t reach the log folder. Choose it again in Settings, or your writing won\'t be saved.</string>
+    <string name="log_not_read">Couldn\'t read the log file, so nothing was saved over it, and what you type here won\'t be kept. Open the log again to retry, or choose the file again in Settings.</string>
     <string name="date_order_preset">Date order %1$s, today %2$s</string>
     <string name="date_order_ymd">year, month, day</string>
     <string name="date_order_dmy">day, month, year</string>
