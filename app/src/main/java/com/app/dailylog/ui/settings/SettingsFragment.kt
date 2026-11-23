@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.app.dailylog.R
 import com.app.dailylog.repository.Shortcut
+import com.app.dailylog.repository.ShortcutRow
 import com.app.dailylog.utils.DetermineBuild
 import android.os.Build
 import com.app.dailylog.utils.FileDisplayName
@@ -295,8 +296,8 @@ class SettingsFragment(
         )
     }
 
-    override fun onBulkAddShortcuts(info: List<Array<String>>) {
-        viewModel.bulkAddShortcuts(info)
+    override fun onBulkAddShortcuts(rows: List<ShortcutRow>) {
+        viewModel.addShortcuts(rows)
     }
 
     override fun onFinishEditShortcutDialog(

@@ -182,4 +182,14 @@ class ShortcutUtilsTest : TestCase() {
         // The substring before cursor is "{DATETIME: HH:mm:ss}" which expands to 8 chars (e.g. "10:03:02")
         assertTrue(result >= 8) // Should be at least 8 chars (the expanded time string)
     }
+
+    fun testGetAppliedShortcutCursorIndexInsideATokenGoesAfterTheDate() {
+        val value = "AB{DATETIME: HH:mm}CD"
+        fun applied(cursor: Int) = ShortcutUtils.getAppliedShortcutCursorIndex(
+            Shortcut(label = "TEST", value = value, cursorIndex = cursor, position = 0, type = ShortcutType.DATETIME)
+        )
+        val afterToken = applied(value.indexOf('}') + 1)
+        assertEquals(afterToken, applied(5))
+        assertEquals(afterToken, applied(value.indexOf('}')))
+    }
 }

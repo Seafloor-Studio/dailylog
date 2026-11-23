@@ -136,10 +136,12 @@ It will prompt you to select a place to create the JSON file.
 "Restore shortcuts" in the same menu imports shortcuts from a JSON file. The JSON file should contain your shortcuts in the proper format. If you want to make a JSON file from scratch, I recommend first making a few shortcuts in the app, exporting that file, and then looking at the file as you design your own.
 
 There is also an option to import from the legacy CSV format ("Restore an old CSV backup") which will be removed in a future version.
-## Bulk add shortcuts
-The other option is to use the bulk add feature. This shows you a text box and allows you to type in values. You don't need to wrap everything in quotes, but you do still need to follow the label, text, cursorIndex, shortcutType order.
+## Add several shortcuts
+Touch and hold +, or choose "Add several shortcuts" from the three-dot menu, to add a batch at once. Each row has a name and the text to insert; "Add a row" gives you another, and ✕ removes one. Empty rows are skipped.
 
-If a shortcut's text contains a comma, wrap the text in quotes, e.g. `Greeting,"hello, world",5,TEXT`. Labels can't contain commas in bulk add; use the single add dialog for those.
+Each row also has a cursor position: how many characters of the text come before the cursor once the shortcut is inserted. It follows the end of the text as you type, until you type a number of your own; then it stays put. Clear the number, or all of the text, to go back to the end. A number past the end of the text is marked, and Add waits until it's fixed.
+
+A shortcut inserts the date wherever its text has `{DATETIME: yyyy-MM-dd}`. The cursor position counts that token as typed, as the slider in the single Add dialog does.
 
 # Privacy
 DailyLog has no accounts, ads, analytics or crash reporting, declares no Android permissions, and contains no networking code. The full [privacy policy](docs/PRIVACY.md) says what it keeps and where.
