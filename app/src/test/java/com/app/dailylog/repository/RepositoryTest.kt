@@ -1,8 +1,11 @@
 package com.app.dailylog.repository
 
+import android.content.ContentProvider
+import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
 import android.os.Looper
+import android.os.ParcelFileDescriptor
 import androidx.lifecycle.Observer
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -16,8 +19,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.Shadows.shadowOf
 import java.io.File
+import java.io.FileNotFoundException
 
 @RunWith(AndroidJUnit4::class)
 class RepositoryTest {
@@ -133,6 +138,59 @@ class RepositoryTest {
         logFile.writeText("edited elsewhere\n")
         repository.readFile(false)
         assertTrue(repository.saveToFile("edited elsewhere\n", false))
+    }
+
+    /** Serves [logFile], but fails to open it for reading while [failReads] is set, as a cloud-backed file can. */
+    class FlakyReadProvider : ContentProvider() {
+        override fun onCreate() = true
+        override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor {
+            if (mode == "r" && failReads) throw FileNotFoundException("provider unavailable")
+            return ParcelFileDescriptor.open(file!!, ParcelFileDescriptor.parseMode(mode))
+        }
+        override fun query(uri: Uri, p: Array<out String>?, s: String?, a: Array<out String>?, o: String?) = null
+        override fun getType(uri: Uri): String? = null
+        override fun insert(uri: Uri, values: ContentValues?): Uri? = null
+        override fun delete(uri: Uri, s: String?, a: Array<out String>?) = 0
+        override fun update(uri: Uri, v: ContentValues?, s: String?, a: Array<out String>?) = 0
+
+        companion object {
+            var file: File? = null
+            var failReads = false
+        }
+    }
+
+    private fun useFlakyLogFile(contents: String) {
+        logFile.writeText(contents)
+        FlakyReadProvider.file = logFile
+        FlakyReadProvider.failReads = false
+        Robolectric.buildContentProvider(FlakyReadProvider::class.java).create("com.app.dailylog.test.flaky")
+        repository.storeFilename("content://com.app.dailylog.test.flaky/log.md")
+    }
+
+    @Test
+    fun failedFirstRead_isNotSavedOverTheFile() {
+        useFlakyLogFile("a year of entries\n")
+        FlakyReadProvider.failReads = true
+        assertEquals("", repository.readFile(true))
+        // What the log does on pause, with the blank it was shown.
+        assertFalse(repository.saveToFile("", false))
+        assertFalse(repository.saveToFile("typed over the blank", true))
+        assertEquals("a year of entries\n", logFile.readText())
+    }
+
+    @Test
+    fun failedReRead_isNotSavedOver_untilAReadSucceeds() {
+        useFlakyLogFile("entries\n")
+        assertEquals("entries\n", repository.readFile(true))
+        FlakyReadProvider.failReads = true
+        assertEquals("", repository.readFile(false))
+        assertFalse(repository.saveToFile("", false))
+        assertEquals("entries\n", logFile.readText())
+
+        FlakyReadProvider.failReads = false
+        assertEquals("entries\n", repository.readFile(false))
+        assertTrue(repository.saveToFile("entries\nmore\n", false))
+        assertEquals("entries\nmore\n", logFile.readText())
     }
 
     @Test

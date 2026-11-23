@@ -58,8 +58,10 @@ class TestDocumentsProvider : ContentProvider() {
         return Bundle().apply { putParcelable(EXTRA_URI, created) }
     }
 
-    override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor =
-        ParcelFileDescriptor.open(fileFor(DocumentsContract.getDocumentId(uri)), ParcelFileDescriptor.parseMode(mode))
+    override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor {
+        if (mode == "r" && failReads) throw java.io.FileNotFoundException("provider unavailable")
+        return ParcelFileDescriptor.open(fileFor(DocumentsContract.getDocumentId(uri)), ParcelFileDescriptor.parseMode(mode))
+    }
 
     override fun getType(uri: Uri): String? = null
     override fun insert(uri: Uri, values: ContentValues?): Uri? = null
@@ -89,11 +91,14 @@ class TestDocumentsProvider : ContentProvider() {
 
         private var root: File? = null
         val createdMimeTypes = mutableMapOf<String, String>()
+        /** Makes opening a document for reading fail, as a cloud-backed provider can. */
+        var failReads = false
 
         /** Registers the provider over [directory] and returns the tree URI a folder pick would give. */
         fun install(context: Context, directory: File): Uri {
             root = directory.also { it.mkdirs() }
             createdMimeTypes.clear()
+            failReads = false
             Robolectric.buildContentProvider(TestDocumentsProvider::class.java).create(AUTHORITY)
             return DocumentsContract.buildTreeDocumentUri(AUTHORITY, ROOT_ID)
         }
