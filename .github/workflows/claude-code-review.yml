@@ -39,7 +39,7 @@ jobs:
         # the job: a skipped job reports as skipped, which is the same dead end once this is a
         # required check.
         if: github.actor != 'dependabot[bot]' && github.event.pull_request.user.login != 'dependabot[bot]'
-        uses: anthropics/claude-code-action@6fed3ca145920b639991cb756090506e1bcaf515 # v1.0.245
+        uses: anthropics/claude-code-action@f431adaf77e0fecf918431e75a2b5b45b85af002 # v1.0.283
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
